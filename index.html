@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>랜덤 발표자 뽑기</title>
+<style>
+  :root{
+    --paper:#f3ead2;
+    --paper-deep:#e9ddb9;
+    --paper-line:#cdbd8f;
+    --ink:#2b2622;
+    --ink-soft:#5b5346;
+    --muted:#8a8070;
+    --jade:#4f6e5c;
+    --jade-dark:#3a5245;
+    --seal:#9c3b34;
+    --seal-dark:#7c2e28;
+    --brass:#a68f57;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:"Batang","궁서","Gungsuh","Nanum Myeongjo",serif;
+    color:var(--ink);
+    min-height:100vh;
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(rgba(43,38,34,0.035) 1px, transparent 1px),
+      radial-gradient(rgba(43,38,34,0.03) 1px, transparent 1px),
+      linear-gradient(160deg, var(--paper) 0%, var(--paper-deep) 100%);
+    background-size:3px 3px, 5px 5px, 100% 100%;
+    background-position:0 0, 1px 2px, 0 0;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:36px 18px 60px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .title-block{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin:8px 0 2px;
+  }
+  .seal-mark{
+    flex:none;
+    width:44px;
+    height:44px;
+    background:var(--seal);
+    color:#f3ead2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.5rem;
+    line-height:1;
+    box-shadow:0 2px 4px rgba(0,0,0,0.25);
+    border:1px solid var(--seal-dark);
+  }
+  h1{
+    color:var(--ink);
+    text-align:center;
+    font-size:1.7rem;
+    font-weight:700;
+    margin:0;
+    letter-spacing:6px;
+    padding-left:6px;
+  }
+  .subtitle{
+    color:var(--ink-soft);
+    text-align:center;
+    font-size:0.88rem;
+    margin:0 0 4px;
+    letter-spacing:0.5px;
+  }
+  .rule{
+    width:100%;
+    max-width:360px;
+    margin:0 auto;
+    border:none;
+    border-top:1px solid var(--paper-line);
+    position:relative;
+  }
+  .rule::after{
+    content:"";
+    position:absolute;
+    top:3px;left:0;right:0;
+    border-top:1px solid var(--paper-line);
+  }
+  .card{
+    background:var(--paper);
+    padding:22px;
+    border:1px solid var(--paper-line);
+    box-shadow:0 6px 18px rgba(43,38,34,0.12), inset 0 0 0 4px rgba(255,255,255,0.15);
+    position:relative;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:5px;
+    border:1px solid rgba(43,38,34,0.12);
+    pointer-events:none;
+  }
+  label.section-title{
+    display:block;
+    font-weight:700;
+    font-size:0.98rem;
+    margin-bottom:10px;
+    color:var(--ink);
+    letter-spacing:2px;
+  }
+  textarea{
+    width:100%;
+    min-height:110px;
+    resize:vertical;
+    border:1px solid var(--paper-line);
+    background:rgba(255,255,255,0.35);
+    padding:12px;
+    font-size:1rem;
+    font-family:inherit;
+    line-height:1.6;
+    color:var(--ink);
+    outline:none;
+  }
+  textarea:focus{border-color:var(--jade);}
+  .hint{
+    font-size:0.76rem;
+    color:var(--muted);
+    margin-top:8px;
+    letter-spacing:0.3px;
+  }
+  .btn-row{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:inherit;
+    border:1px solid var(--ink);
+    cursor:pointer;
+    border-radius:0;
+    font-weight:700;
+    letter-spacing:2px;
+    transition:transform .08s ease, opacity .15s ease, background .15s ease;
+    background:transparent;
+  }
+  button:active{transform:scale(0.98);}
+  button:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn-save{
+    flex:1;
+    min-width:120px;
+    background:var(--ink);
+    color:var(--paper);
+    padding:12px;
+    font-size:0.92rem;
+  }
+  .btn-reset-list{
+    background:var(--paper);
+    color:var(--seal);
+    border:1px solid var(--seal)!important;
+    padding:12px 14px;
+    font-size:0.88rem;
+  }
+  .draw-section{
+    text-align:center;
+  }
+  .btn-draw{
+    background:var(--jade);
+    color:var(--paper);
+    font-size:1.15rem;
+    padding:20px;
+    width:100%;
+    border:1px solid var(--jade-dark);
+    box-shadow:inset 0 0 0 3px rgba(243,234,210,0.18);
+    letter-spacing:8px;
+  }
+  .btn-draw:hover:not(:disabled){background:var(--jade-dark);}
+  .progress{
+    margin-top:16px;
+    font-size:0.88rem;
+    color:var(--ink-soft);
+    letter-spacing:0.5px;
+  }
+  .progress b{color:var(--seal);}
+  .drawn-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:center;
+    margin-top:10px;
+  }
+  .chip{
+    background:rgba(255,255,255,0.4);
+    color:var(--muted);
+    padding:4px 10px;
+    border:1px solid var(--paper-line);
+    font-size:0.78rem;
+    text-decoration:line-through;
+  }
+  .result-card{
+    background:var(--paper);
+    padding:44px 20px;
+    text-align:center;
+    border:1px solid var(--paper-line);
+    box-shadow:0 8px 22px rgba(43,38,34,0.15);
+    min-height:140px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  .result-card::before{
+    content:"";
+    position:absolute;
+    inset:6px;
+    border:1px solid rgba(43,38,34,0.1);
+    pointer-events:none;
+  }
+  .result-name{
+    font-size:2.7rem;
+    font-weight:700;
+    color:var(--ink);
+    word-break:break-all;
+    transition:transform .1s ease;
+    letter-spacing:4px;
+  }
+  .result-name.placeholder{
+    font-size:1.05rem;
+    color:var(--muted);
+    font-weight:500;
+    letter-spacing:1px;
+  }
+  .result-name.shuffling{
+    color:var(--muted);
+  }
+  .result-name.reveal{
+    animation:pop .35s ease;
+    color:var(--seal);
+  }
+  @keyframes pop{
+    0%{transform:scale(0.7);opacity:0;}
+    60%{transform:scale(1.1);}
+    100%{transform:scale(1);opacity:1;}
+  }
+  .round-complete{
+    text-align:center;
+    color:var(--ink);
+    font-size:0.9rem;
+    background:rgba(255,255,255,0.35);
+    border:1px solid var(--jade);
+    padding:12px;
+    letter-spacing:1px;
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.72rem;
+    margin-top:10px;
+    letter-spacing:0.5px;
+  }
+  @media (max-width:400px){
+    .result-name{font-size:2.1rem;letter-spacing:2px;}
+    h1{font-size:1.3rem;letter-spacing:3px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="title-block">
+    <div class="seal-mark">選</div>
+    <h1>발표자 뽑기</h1>
+  </div>
+  <p class="subtitle">이름을 적고 뽑기를 눌러보세요 · 모두 한 번씩 뽑힐 때까지 중복 없음</p>
+  <hr class="rule">
+
+  <div class="card">
+    <label class="section-title" for="nameInput">참가자 명단</label>
+    <textarea id="nameInput" placeholder="한 줄에 한 명씩 입력하세요&#10;예)&#10;김민준&#10;이서연&#10;박도윤"></textarea>
+    <p class="hint">줄바꿈 또는 쉼표(,)로 이름을 구분할 수 있어요. 입력 후 자동 저장됩니다.</p>
+    <div class="btn-row">
+      <button class="btn-save" id="saveBtn">명단 저장</button>
+      <button class="btn-reset-list" id="clearListBtn">명단 지우기</button>
+    </div>
+  </div>
+
+  <div class="card draw-section">
+    <button class="btn-draw" id="drawBtn">뽑 기</button>
+    <div class="progress" id="progress"></div>
+    <div class="drawn-list" id="drawnList"></div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-name placeholder" id="resultName">뽑기 버튼을 누르면<br>여기에 결과가 표시됩니다</div>
+  </div>
+
+  <div id="roundComplete" style="display:none;" class="round-complete">
+    ─ 모두 한 번씩 뽑혔습니다 · 새 라운드를 시작합니다 ─
+  </div>
+
+  <footer>인터넷 연결 없이 동작하는 오프라인 웹앱 · 데이터는 이 브라우저에만 저장됩니다</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "picker_names_v1";
+  var STATE_KEY = "picker_state_v1";
+
+  var nameInput = document.getElementById("nameInput");
+  var saveBtn = document.getElementById("saveBtn");
+  var clearListBtn = document.getElementById("clearListBtn");
+  var drawBtn = document.getElementById("drawBtn");
+  var resultName = document.getElementById("resultName");
+  var progress = document.getElementById("progress");
+  var drawnListEl = document.getElementById("drawnList");
+  var roundCompleteEl = document.getElementById("roundComplete");
+
+  var state = {
+    drawnThisRound: [],   // 이번 라운드에서 뽑힌 이름들
+    lastDrawn: null        // 직전에 뽑힌 이름 (연속 방지용, 라운드 초기화 직후에도 참고)
+  };
+
+  var isShuffling = false;
+
+  function parseNames(text){
+    return text
+      .split(/[\n,]/)
+      .map(function(s){ return s.trim(); })
+      .filter(function(s){ return s.length > 0; });
+  }
+
+  function getUniqueNames(){
+    var raw = parseNames(nameInput.value);
+    var seen = {};
+    var out = [];
+    raw.forEach(function(n){
+      if(!seen[n]){
+        seen[n] = true;
+        out.push(n);
+      }
+    });
+    return out;
+  }
+
+  function loadFromStorage(){
+    try{
+      var savedNames = localStorage.getItem(STORAGE_KEY);
+      if(savedNames !== null){
+        nameInput.value = savedNames;
+      }
+      var savedState = localStorage.getItem(STATE_KEY);
+      if(savedState){
+        var parsed = JSON.parse(savedState);
+        if(parsed && Array.isArray(parsed.drawnThisRound)){
+          state.drawnThisRound = parsed.drawnThisRound;
+          state.lastDrawn = parsed.lastDrawn || null;
+        }
+      }
+    }catch(e){
+      // localStorage 접근 불가 시 무시 (예: file:// 일부 환경)
+    }
+  }
+
+  function saveNamesToStorage(){
+    try{
+      localStorage.setItem(STORAGE_KEY, nameInput.value);
+    }catch(e){}
+  }
+
+  function saveStateToStorage(){
+    try{
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    }catch(e){}
+  }
+
+  function renderProgress(){
+    var names = getUniqueNames();
+    var total = names.length;
+    var drawnCount = state.drawnThisRound.length;
+    var remaining = Math.max(total - drawnCount, 0);
+
+    if(total === 0){
+      progress.innerHTML = "";
+      drawnListEl.innerHTML = "";
+      return;
+    }
+
+    progress.innerHTML = "남은 인원 <b>" + remaining + "</b> / 전체 " + total + "명";
+
+    drawnListEl.innerHTML = "";
+    state.drawnThisRound.forEach(function(n){
+      var chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = n;
+      drawnListEl.appendChild(chip);
+    });
+  }
+
+  function pruneDrawnAgainstCurrentNames(){
+    var names = getUniqueNames();
+    var nameSet = {};
+    names.forEach(function(n){ nameSet[n] = true; });
+    state.drawnThisRound = state.drawnThisRound.filter(function(n){
+      return nameSet[n];
+    });
+  }
+
+  function pickCandidate(){
+    var names = getUniqueNames();
+    var drawnSet = {};
+    state.drawnThisRound.forEach(function(n){ drawnSet[n] = true; });
+
+    var pool = names.filter(function(n){ return !drawnSet[n]; });
+
+    // 전원 소진 -> 라운드 초기화
+    if(pool.length === 0){
+      state.drawnThisRound = [];
+      pool = names.slice();
+    }
+
+    // 연속 중복 방지: 방금 뽑힌 사람과 겹치지 않게 (풀에 다른 후보가 있을 때만)
+    if(pool.length > 1 && state.lastDrawn){
+      var filtered = pool.filter(function(n){ return n !== state.lastDrawn; });
+      if(filtered.length > 0){
+        pool = filtered;
+      }
+    }
+
+    var idx = Math.floor(Math.random() * pool.length);
+    return pool[idx];
+  }
+
+  function runShuffleAnimation(names, finalName, onDone){
+    isShuffling = true;
+    resultName.classList.remove("placeholder", "reveal");
+    resultName.classList.add("shuffling");
+
+    var displayPool = names.length > 0 ? names : ["???"];
+    var ticks = 14;
+    var i = 0;
+    var interval = setInterval(function(){
+      var randomIdx = Math.floor(Math.random() * displayPool.length);
+      resultName.textContent = displayPool[randomIdx];
+      i++;
+      if(i >= ticks){
+        clearInterval(interval);
+        resultName.textContent = finalName;
+        resultName.classList.remove("shuffling");
+        resultName.classList.add("reveal");
+        isShuffling = false;
+        if(onDone) onDone();
+      }
+    }, 70);
+  }
+
+  function showRoundCompleteBanner(){
+    roundCompleteEl.style.display = "block";
+    setTimeout(function(){
+      roundCompleteEl.style.display = "none";
+    }, 2600);
+  }
+
+  function handleDraw(){
+    if(isShuffling) return;
+
+    pruneDrawnAgainstCurrentNames();
+    var names = getUniqueNames();
+
+    if(names.length === 0){
+      resultName.className = "result-name placeholder";
+      resultName.innerHTML = "먼저 참가자 명단을<br>입력해주세요";
+      return;
+    }
+    if(names.length === 1){
+      state.drawnThisRound = [];
+    }
+
+    var wasRoundResetNeeded = state.drawnThisRound.length >= names.length;
+
+    drawBtn.disabled = true;
+
+    var picked = pickCandidate();
+
+    runShuffleAnimation(names, picked, function(){
+      if(state.drawnThisRound.indexOf(picked) === -1){
+        state.drawnThisRound.push(picked);
+      }
+      state.lastDrawn = picked;
+      saveStateToStorage();
+      renderProgress();
+      drawBtn.disabled = false;
+
+      if(state.drawnThisRound.length >= names.length){
+        showRoundCompleteBanner();
+      }
+    });
+  }
+
+  saveBtn.addEventListener("click", function(){
+    saveNamesToStorage();
+    pruneDrawnAgainstCurrentNames();
+    saveStateToStorage();
+    renderProgress();
+    saveBtn.textContent = "저장됨 ✓";
+    setTimeout(function(){ saveBtn.textContent = "명단 저장"; }, 1200);
+  });
+
+  clearListBtn.addEventListener("click", function(){
+    if(!confirm("입력한 명단과 진행 기록을 모두 지울까요?")) return;
+    nameInput.value = "";
+    state.drawnThisRound = [];
+    state.lastDrawn = null;
+    saveNamesToStorage();
+    saveStateToStorage();
+    renderProgress();
+    resultName.className = "result-name placeholder";
+    resultName.innerHTML = "뽑기 버튼을 누르면<br>여기에 결과가 표시됩니다";
+  });
+
+  nameInput.addEventListener("input", function(){
+    saveNamesToStorage();
+    pruneDrawnAgainstCurrentNames();
+    saveStateToStorage();
+    renderProgress();
+  });
+
+  drawBtn.addEventListener("click", handleDraw);
+
+  // 초기화
+  loadFromStorage();
+  pruneDrawnAgainstCurrentNames();
+  renderProgress();
+})();
+</script>
+</body>
+</html>
